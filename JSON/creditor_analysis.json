@@ -1,0 +1,83 @@
+{
+    "creditors": [
+        {
+            "count": 1,
+            "name": "ANYFIN",
+            "sum": 30532
+        },
+        {
+            "count": 1,
+            "name": "SVEA EKONOMI",
+            "sum": 203
+        }
+    ],
+    "debtCollectors": [
+        {
+            "count": 1,
+            "name": "ALEKTUM",
+            "sum": 462
+        },
+        {
+            "count": 1,
+            "name": "COLLECTIA INKASSO",
+            "sum": 340
+        }
+    ],
+    "installmentPayments": [
+        {
+            "count": 15,
+            "name": "UNKNOWN",
+            "sum": 58262
+        },
+        {
+            "count": 12,
+            "name": "ANYFIN",
+            "sum": 45176
+        },
+        {
+            "count": 14,
+            "name": "AMERICAN EXPRESS",
+            "sum": 44353
+        },
+        {
+            "count": 14,
+            "name": "KLARNA BANK",
+            "sum": 12415
+        },
+        {
+            "count": 11,
+            "name": "CSN",
+            "sum": 8535
+        },
+        {
+            "count": 10,
+            "name": "RESURS BANK",
+            "sum": 8166
+        },
+        {
+            "count": 2,
+            "name": "SKATTEVERKET",
+            "sum": 1442
+        },
+        {
+            "count": 3,
+            "name": "AVARDA",
+            "sum": 570
+        },
+        {
+            "count": 1,
+            "name": "SVEA EKONOMI",
+            "sum": 523
+        },
+        {
+            "count": 1,
+            "name": "QLIRO",
+            "sum": 386
+        },
+        {
+            "count": 1,
+            "name": "PAYEX",
+            "sum": 250
+        }
+    ]
+}

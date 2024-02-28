@@ -1,0 +1,87 @@
+{
+    "accounts": [
+        {
+            "balances": {
+                "available": null,
+                "booked": {
+                    "currencyCode": null,
+                    "value": null
+                }
+            },
+            "customerSegment": "PERSONAL",
+            "dates": {
+                "lastRefreshed": "2024-02-27T09:31:22Z"
+            },
+            "financialInstitutionId": "ea3b5ac45e274e62b3fd1181aa3aca9c",
+            "id": "bf0b136a6fb44959a3394659180e2074",
+            "identifiers": {
+                "financialInstitution": {
+                    "accountNumber": "6501-145 069 508"
+                },
+                "iban": {
+                    "bban": "60000000000145069508",
+                    "bic": null,
+                    "iban": "SE2560000000000145069508"
+                }
+            },
+            "name": "Mitt sparkonto",
+            "type": "CHECKING"
+        },
+        {
+            "balances": {
+                "available": null,
+                "booked": {
+                    "currencyCode": null,
+                    "value": null
+                }
+            },
+            "customerSegment": "PERSONAL",
+            "dates": {
+                "lastRefreshed": "2024-02-27T09:31:22Z"
+            },
+            "financialInstitutionId": "ea3b5ac45e274e62b3fd1181aa3aca9c",
+            "id": "8b4c68d7182942e3828bf3bae06c1767",
+            "identifiers": {
+                "financialInstitution": {
+                    "accountNumber": "6501-282 522 212"
+                },
+                "iban": {
+                    "bban": "60000000000282522212",
+                    "bic": null,
+                    "iban": "SE2460000000000282522212"
+                }
+            },
+            "name": "Lön",
+            "type": "CHECKING"
+        }
+    ],
+    "id": "ac97447a4cc94aa5a418c9277aa9c37e",
+    "transactions": [
+        {
+            "accountId": "8b4c68d7182942e3828bf3bae06c1767",
+            "amount": {
+                "currencyCode": "SEK",
+                "value": {
+                    "scale": "1",
+                    "unscaledValue": "-8500"
+                }
+            },
+            "dates": {
+                "booked": "2024-02-27",
+                "value": null
+            },
+            "descriptions": {
+                "display": "Trygghetsför",
+                "original": "Trygghetsför"
+            },
+            "id": "6c3c61ae8e064ec1aae4fb1265b4c5b8",
+            "identifiers": null,
+            "providerMutability": "MUTABILITY_UNDEFINED",
+            "status": "BOOKED",
+            "types": {
+                "financialInstitutionTypeCode": null,
+                "type": "DEFAULT"
+            }
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "crypto": "Green",
+    "cryptoStatus": "Ok",
+    "foreignPayments": "Green",
+    "foreignPaymentsStatus": "Ok",
+    "gambling": "Green",
+    "gamblingStatus": "Ok",
+    "prescreen": "Green",
+    "prescreenStatus": "Accept",
+    "salary": "Green",
+    "salaryStatus": "Ok"
+}
