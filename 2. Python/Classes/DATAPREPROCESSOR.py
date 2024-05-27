@@ -49,7 +49,7 @@ class DataPreprocessor:
 
         return position
 
-    def get_split_data_with_upsample_and_scaling(self, quartile1):
+    def get_split_data_with_upsample_and_scaling(self, quartile1, upsample= True):
         """
         Get upsampled data where the split is based on a specified quartile to harmonize distribution,
         and then scale the data.
@@ -62,24 +62,42 @@ class DataPreprocessor:
         """
         print('Binary Split: ' + str(self.df.Ever90.value_counts()))
 
-        # Shuffle the DataFrame
+        ## Shuffle data -- change this when we have more transactions in the future
         self.df = self.df.sample(frac=1, random_state=42).reset_index(drop=True)
 
         # Determine the split index
         position1 = self.from_quartile_idx(quartile1)
         train, test = self.df.iloc[:position1], self.df.iloc[position1:]
 
-        # Upsample only the training data
-        train_upsampled = self.upsample(train, 'Ever90')
-        print(train_upsampled.Ever90.value_counts())
+        if upsample == True:
+            # Shuffle the DataFrame
 
-        # Create Xtrain, Ytrain, Xtest, Ytest
-        Xtrain, Ytrain = train_upsampled.drop(columns='Ever90'), train_upsampled['Ever90']
-        Xtest, Ytest = test.drop(columns='Ever90'), test['Ever90']
 
-        # Scale the data
-        scaler = StandardScaler()
-        Xtrain_scaled = scaler.fit_transform(Xtrain)
-        Xtest_scaled = scaler.transform(Xtest)
+            # Upsample only the training data
+            train_upsampled = self.upsample(train, 'Ever90')
+            print(train_upsampled.Ever90.value_counts())
 
-        return (Xtrain_scaled, Ytrain.values), (Xtest_scaled, Ytest.values), train_upsampled
+            # Create Xtrain, Ytrain, Xtest, Ytest
+            Xtrain, Ytrain = train_upsampled.drop(columns='Ever90'), train_upsampled['Ever90']
+            Xtest, Ytest = test.drop(columns='Ever90'), test['Ever90']
+
+            # Scale the data
+            scaler = StandardScaler()
+            Xtrain_scaled = scaler.fit_transform(Xtrain)
+            Xtest_scaled = scaler.transform(Xtest)
+
+            return (Xtrain_scaled, Ytrain.values), (Xtest_scaled, Ytest.values), self.df
+
+        else:
+
+
+            # Create Xtrain, Ytrain, Xtest, Ytest
+            Xtrain, Ytrain = train.drop(columns='Ever90'), train['Ever90']
+            Xtest, Ytest = test.drop(columns='Ever90'), test['Ever90']
+
+            # Scale the data
+            scaler = StandardScaler()
+            Xtrain_scaled = scaler.fit_transform(Xtrain)
+            Xtest_scaled = scaler.transform(Xtest)
+
+            return (Xtrain_scaled, Ytrain.values), (Xtest_scaled, Ytest.values), self.df

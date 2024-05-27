@@ -61,22 +61,21 @@ class ModelEvaluator:
 
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, roc_auc_score, make_scorer
-from sklearn.inspection import permutation_importance
-import plotly.graph_objects as go
+        from sklearn.inspection import permutation_importance
+from sklearn.metrics import make_scorer, roc_auc_score
 from collections import defaultdict
+import plotly.graph_objects as go
 
 class FeatureImportance:
-    def __init__(self, train_upsampled, best_models, forforsta):
-        self.train_upsampled = train_upsampled
+    def __init__(self, df, best_models, forforsta, run_correlation_cluster=True):
+        self.train_upsampled = df
         self.best_models = best_models
         self.forforsta = forforsta
-        self.feature_names = train_upsampled.drop(columns='Ever90').columns
+        self.feature_names = df.drop(columns='Ever90').columns
         self.gini_scorer = make_scorer(self.gini_score, needs_proba=True)
         self.normalized_importances = {}
         self.cumulative_importance = {}
+        self.run_correlation_cluster = run_correlation_cluster
 
     @staticmethod
     def gini_score(y_true, y_prob):
@@ -87,27 +86,33 @@ class FeatureImportance:
         total_importance = sum(abs(value) for value in importances.values())
         return {k: abs(v) / total_importance for k, v in importances.items()}
 
+    def get_final_estimator(self, pipeline, step_name):
+        if hasattr(pipeline, 'named_steps'):
+            print(f"Available steps in pipeline: {pipeline.named_steps}")
+            return pipeline.named_steps.get(step_name)
+        return pipeline
+
     def calculate_importances(self):
         # Random Forest
-        rfr_tune = self.best_models['random_forest']
+        rfr_tune = self.get_final_estimator(self.best_models['random_forest'], 'model')
         feature_importances = rfr_tune.feature_importances_
         importance_dict = dict(zip(self.feature_names, feature_importances))
         self.normalized_importances['RFS'] = self.normalize_importances(importance_dict)
 
         # Logistic Regression
-        lr_tuned = self.best_models['logistic_regression']
+        lr_tuned = self.get_final_estimator(self.best_models['logistic_regression'], 'model')
         coefficients = lr_tuned.coef_[0]
         importance_dict = dict(zip(self.feature_names, abs(coefficients)))
         self.normalized_importances['LG'] = self.normalize_importances(importance_dict)
 
         # XGBoost
-        xgb_model = self.best_models['xgboost']
+        xgb_model = self.get_final_estimator(self.best_models['xgboost'], 'model')
         feature_importances = xgb_model.feature_importances_
         importance_dict = dict(zip(self.feature_names, feature_importances))
         self.normalized_importances['XGB'] = self.normalize_importances(importance_dict)
 
         # Naive Bayes
-        nb_model = self.best_models['naive_bayes']
+        nb_model = self.get_final_estimator(self.best_models['naive_bayes'], 'model')
         train_features = self.train_upsampled.drop(columns='Ever90')
         train_target = self.train_upsampled['Ever90']
         result = permutation_importance(nb_model, train_features, train_target, scoring=self.gini_scorer, n_repeats=10, random_state=42)
@@ -125,6 +130,9 @@ class FeatureImportance:
         self.cumulative_importance = {feature: sum(abs(importances.get(feature, 0)) for importances in combined_dict.values()) for feature in self.feature_names}
 
     def find_highly_correlated_features(self):
+        if not self.run_correlation_cluster:
+            return [], []
+
         correlation_matrix = self.forforsta[self.forforsta.columns].corr()
         highly_correlated_pairs = []
 
@@ -187,17 +195,17 @@ class FeatureImportance:
             xaxis_title="Features",
             yaxis_title="Importance",
             xaxis={'categoryorder': 'total descending', 'tickangle': 50},
-            width=1800,
+            width=2800,
             height=800
         )
 
         fig.show()
 
-        return sorted_features 
+        return sorted_features, [feature for feature in sorted_features if cumulative_importance[feature] > 0.01]
 
 # # Usage
 # # Assuming best_models, train_upsampled, and forforsta are predefined
-# feature_importance = FeatureImportance(train_upsampled, best_models, forforsta)
+# feature_importance = FeatureImportance(train_upsampled, best_models, forforsta, run_correlation_cluster=True)
 # feature_importance.calculate_importances()
 # feature_importance.calculate_cumulative_importance()
 # features_to_keep, features_to_discard = feature_importance.find_highly_correlated_features()
@@ -205,4 +213,10 @@ class FeatureImportance:
 # print("Features to keep:", features_to_keep)
 # print("Features to discard:", features_to_discard)
 
-# feature_importance.plot_importances()
+# sorted_features, non_zero_features = feature_importance.plot_importances()
+
+# # Filter away highly correlated features and take away the absolute worst
+# filtered_list = [item for item in sorted_features if item not in features_to_discard]
+# SelectionOne = filtered_list[:40]
+
+# print("Non-zero features:", non_zero_features)
