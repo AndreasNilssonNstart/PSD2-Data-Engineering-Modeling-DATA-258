@@ -1,23 +1,27 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, roc_auc_score, make_scorer
+from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.inspection import permutation_importance
 import plotly.graph_objects as go
 from collections import defaultdict
 
 class ModelEvaluator:
-    def __init__(self, Xtrain, Ytrain, Xtest, Ytest, best_models):
+    def __init__(self, Xtrain, Ytrain, Xval, Yval, Xtest, Ytest, best_models):
         self.Xtrain = pd.DataFrame(Xtrain).drop_duplicates()
         self.Ytrain = pd.Series(Ytrain).loc[self.Xtrain.index]
+        self.Xval = Xval
+        self.Yval = Yval
         self.Xtest = Xtest
         self.Ytest = Ytest
         self.best_models = best_models
         self.train_results_df = pd.DataFrame()
+        self.val_results_df = pd.DataFrame()
         self.test_results_df = pd.DataFrame()
         self._initialize_results()
 
     def _initialize_results(self):
         self.train_results_df['Y_Train'] = self.Ytrain.reset_index(drop=True)
+        self.val_results_df['Y_Val'] = pd.Series(self.Yval).reset_index(drop=True)
         self.test_results_df['Y_Test'] = pd.Series(self.Ytest).reset_index(drop=True)
 
     def evaluate_models(self):
@@ -25,39 +29,65 @@ class ModelEvaluator:
             y_train_pred = model.predict(self.Xtrain)
             y_train_pred_proba = model.predict_proba(self.Xtrain)[:, 1]
             
+            y_val_pred = model.predict(self.Xval)
+            y_val_pred_proba = model.predict_proba(self.Xval)[:, 1]
+
             y_test_pred = model.predict(self.Xtest)
             y_test_pred_proba = model.predict_proba(self.Xtest)[:, 1]
             
             self.train_results_df[model_name + '_Train_Pred'] = y_train_pred
             self.train_results_df[model_name + '_Train_Proba'] = y_train_pred_proba
 
+            self.val_results_df[model_name + '_Val_Pred'] = y_val_pred
+            self.val_results_df[model_name + '_Val_Proba'] = y_val_pred_proba
+
             self.test_results_df[model_name + '_Test_Pred'] = y_test_pred
             self.test_results_df[model_name + '_Test_Proba'] = y_test_pred_proba
 
     def plot_roc_curves(self):
-        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+        fig, axes = plt.subplots(3, len(self.best_models), figsize=(15, 12))
         axes = axes.flatten()
 
         for i, model_name in enumerate(self.best_models.keys()):
             fpr_train, tpr_train, _ = roc_curve(self.train_results_df['Y_Train'], self.train_results_df[model_name + '_Train_Proba'])
+            fpr_val, tpr_val, _ = roc_curve(self.val_results_df['Y_Val'], self.val_results_df[model_name + '_Val_Proba'])
             fpr_test, tpr_test, _ = roc_curve(self.test_results_df['Y_Test'], self.test_results_df[model_name + '_Test_Proba'])
             
             train_auc = roc_auc_score(self.train_results_df['Y_Train'], self.train_results_df[model_name + '_Train_Proba'])
             train_gini = 2 * train_auc - 1
+            val_auc = roc_auc_score(self.val_results_df['Y_Val'], self.val_results_df[model_name + '_Val_Proba'])
+            val_gini = 2 * val_auc - 1
             test_auc = roc_auc_score(self.test_results_df['Y_Test'], self.test_results_df[model_name + '_Test_Proba'])
             test_gini = 2 * test_auc - 1
             
-            ax = axes[i]
-            ax.plot(fpr_train, tpr_train, label=f'Train (AUC = {train_auc:.2f}, Gini = {train_gini:.2f})')
-            ax.plot(fpr_test, tpr_test, label=f'Test (AUC = {test_auc:.2f}, Gini = {test_gini:.2f})')
-            ax.plot([0, 1], [0, 1], 'k--')
-            ax.set_xlabel('False Positive Rate')
-            ax.set_ylabel('True Positive Rate')
-            ax.set_title(f'ROC Curve for {model_name}')
-            ax.legend(loc='best')
+            ax_train = axes[i]
+            ax_val = axes[i + len(self.best_models)]
+            ax_test = axes[i + 2 * len(self.best_models)]
+
+            ax_train.plot(fpr_train, tpr_train, label=f'Train (AUC = {train_auc:.2f}, Gini = {train_gini:.2f})')
+            ax_train.plot([0, 1], [0, 1], 'k--')
+            ax_train.set_xlabel('False Positive Rate')
+            ax_train.set_ylabel('True Positive Rate')
+            ax_train.set_title(f'ROC Curve for {model_name} (Train)')
+            ax_train.legend(loc='best')
+
+            ax_val.plot(fpr_val, tpr_val, label=f'Val (AUC = {val_auc:.2f}, Gini = {val_gini:.2f})')
+            ax_val.plot([0, 1], [0, 1], 'k--')
+            ax_val.set_xlabel('False Positive Rate')
+            ax_val.set_ylabel('True Positive Rate')
+            ax_val.set_title(f'ROC Curve for {model_name} (Val)')
+            ax_val.legend(loc='best')
+
+            ax_test.plot(fpr_test, tpr_test, label=f'Test (AUC = {test_auc:.2f}, Gini = {test_gini:.2f})')
+            ax_test.plot([0, 1], [0, 1], 'k--')
+            ax_test.set_xlabel('False Positive Rate')
+            ax_test.set_ylabel('True Positive Rate')
+            ax_test.set_title(f'ROC Curve for {model_name} (Test)')
+            ax_test.legend(loc='best')
 
         plt.tight_layout()
         plt.show()
+
 
 
 
@@ -67,10 +97,10 @@ from collections import defaultdict
 import plotly.graph_objects as go
 
 class FeatureImportance:
-    def __init__(self, df, best_models, forforsta, run_correlation_cluster=True):
+    def __init__(self, df, best_models, run_correlation_cluster=True):
         self.train_upsampled = df
         self.best_models = best_models
-        self.forforsta = forforsta
+        self.df = df
         self.feature_names = df.drop(columns='Ever90').columns
         self.gini_scorer = make_scorer(self.gini_score, needs_proba=True)
         self.normalized_importances = {}
@@ -133,7 +163,7 @@ class FeatureImportance:
         if not self.run_correlation_cluster:
             return [], []
 
-        correlation_matrix = self.forforsta[self.forforsta.columns].corr()
+        correlation_matrix = self.df[self.df.columns].corr()
         highly_correlated_pairs = []
 
         for col in correlation_matrix.columns:
