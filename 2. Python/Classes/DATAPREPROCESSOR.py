@@ -121,7 +121,7 @@ class DataPreprocessor:
     #     return train, test
 
 
-    def scaller(self, train, val, test, features):
+    def scaller(self, train, val, test, features,scale = True):
         """
         Scale the features of train, validation, and test data.
         """
@@ -130,13 +130,18 @@ class DataPreprocessor:
         Xval, Yval = val[features], val['Ever90']
         Xtest, Ytest = test[features], test['Ever90']
 
-        # Scale the data
-        scaler = StandardScaler()
-        Xtrain_scaled = scaler.fit_transform(Xtrain)
-        Xval_scaled = scaler.transform(Xval)
-        Xtest_scaled = scaler.transform(Xtest)
 
-        return (Xtrain_scaled, Ytrain.values), (Xval_scaled, Yval.values), (Xtest_scaled, Ytest.values)
+        if scale == True:
+            # Scale the data
+            scaler = StandardScaler()
+            Xtrain_scaled = scaler.fit_transform(Xtrain)
+            Xval_scaled = scaler.transform(Xval)
+            Xtest_scaled = scaler.transform(Xtest)
+
+            return (Xtrain_scaled, Ytrain.values), (Xval_scaled, Yval.values), (Xtest_scaled, Ytest.values)
+
+        else:
+            return (Xtrain, Ytrain), (Xval, Yval), (Xtest, Ytest)
 
 
     def get_split_data_with_upsample_and_scaling(self, quartile1, upsample=True):
